@@ -1,0 +1,220 @@
+generator client {
+    provider        = "prisma-client-js"
+    previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+// Single-vendor schema with NextAuth models
+
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String    @unique
+    emailVerified DateTime?
+    image         String?
+    password      String?   // hashed password for credentials
+    // Store role as string for SQLite compatibility
+    role          String    @default("CUSTOMER")
+    // Store cart JSON as text
+    cart          String    @default("{}")
+
+    accounts  Account[]
+    sessions  Session[]
+    ratings   Rating[]
+    addresses Address[]
+    orders    Order[]
+}
+
+model Product {
+    id          String   @id @default(cuid())
+    name        String
+    description String
+    mrp         Float
+    price       Float
+    // SQLite doesn't support native string arrays — store JSON string instead
+    images      String   @default("[]")
+    category    String
+    categoryId  String?
+    categoryRef Category? @relation(fields: [categoryId], references: [id])
+    latest      Boolean  @default(false)
+    bestSelling Boolean  @default(false)
+    inStock     Boolean  @default(true)
+    featured    Boolean  @default(false)
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    orderItems OrderItem[]
+    ratings    Rating[]
+}
+
+model Category {
+    id          String    @id @default(cuid())
+    name        String
+    slug        String    @unique
+    description String?
+    image       String?
+    products    Product[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+}
+
+
+model Order {
+    id           String       @id @default(cuid())
+    total        Float
+    status       String       @default("ORDER_PLACED")
+    // soft-delete flag: mark orders deleted without removing from DB
+    isDeleted    Boolean      @default(false)
+    userId       String?
+    addressId    String
+    isPaid       Boolean      @default(false)
+    paymentMethod String
+    isCouponUsed Boolean      @default(false)
+    // Store coupon data as JSON string for SQLite compatibility
+    coupon       String       @default("{}")
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+
+    orderItems OrderItem[]
+
+    user    User?   @relation(fields: [userId], references: [id])
+    address Address @relation(fields: [addressId], references: [id])
+}
+
+model OrderItem {
+    orderId   String
+    productId String
+    quantity  Int
+    price     Float
+
+    order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+    @@id([orderId, productId])
+}
+
+model Rating {
+    id        String   @id @default(cuid())
+    rating    Int
+    review    String
+    userId    String?
+    productId String
+    orderId   String?
+    name      String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Address {
+    id        String   @id @default(cuid())
+    userId    String?
+    name      String
+    email     String
+    street    String
+    city      String
+    state     String
+    zip       String
+    country   String
+    phone     String
+    createdAt DateTime @default(now())
+
+    orders Order[]
+    user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Coupon {
+    code        String   @id
+    description String
+    discount    Float
+    forNewUser  Boolean
+    forMember   Boolean  @default(false)
+    isPublic    Boolean
+    expiresAt   DateTime
+    createdAt   DateTime @default(now())
+}
+
+model ContactMessage {
+    id        String   @id @default(cuid())
+    name      String
+    email     String
+    message   String
+    isRead    Boolean  @default(false)
+    createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+    id                  String   @id @default("site")
+    siteName            String   @default("gocart")
+    phone               String   @default("+1 (800) 322-1384")
+    email               String   @default("support@gocart.com")
+    address             String   @default("425 Market Street, San Francisco, CA")
+    logoImage           String   @default("")
+    facebookPixelId     String   @default("")
+    googleAnalyticsId   String   @default("")
+    googleTagManagerId  String   @default("")
+    seoTitle            String   @default("GoCart. - Shop smarter")
+    metaDescription     String   @default("GoCart is the online shop for curated gadgets, essentials, and fast support.")
+    metaKeywords        String   @default("electronics,gadgets,shopping,online store,technology")
+    // New editable fields for header/footer and site copy
+    announcement        String   @default("")
+    headerNav           String   @default("[]")
+    footerProducts      String   @default("[]")
+    footerWebsite       String   @default("[]")
+    socialLinks         String   @default("[]")
+    copyrightText       String   @default("Copyright 2025 © gocart All Right Reserved.")
+    heroBanner          String   @default("")
+    dhakaInsideCharge   Float    @default(70)
+    dhakaOutsideCharge  Float    @default(120)
+    codActive           Boolean  @default(true)
+    bkashActive         Boolean  @default(true)
+    bkashNumber         String   @default("")
+    nagadActive         Boolean  @default(true)
+    nagadNumber         String   @default("")
+    bkashInstruction    String   @default("")
+    nagadInstruction    String   @default("")
+    updatedAt           DateTime @updatedAt
+}
+
+// NextAuth models
+model Account {
+    id                 String  @id @default(cuid())
+    userId             String
+    type               String
+    provider           String
+    providerAccountId  String
+    refresh_token      String?
+    access_token       String?
+    expires_at         Int?
+    token_type         String?
+    scope              String?
+    id_token           String?
+    session_state      String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([provider, providerAccountId])
+}
+
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
+
+    @@unique([identifier, token])
+}
+
