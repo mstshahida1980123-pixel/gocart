@@ -3,13 +3,6 @@ import path from 'path'
 import { getToken } from 'next-auth/jwt'
 import { v2 as cloudinary } from 'cloudinary'
 
-// Configure Cloudinary from env (if provided)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
-
 export async function POST(req) {
   try {
     // Only admins may upload files
@@ -26,6 +19,15 @@ export async function POST(req) {
     if (!image) return new Response(JSON.stringify({ error: 'No image provided' }), { status: 400, headers: { 'content-type': 'application/json' } })
 
     const useCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
+    
+    // Configure Cloudinary at request time (not module load time)
+    if (useCloudinary) {
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      })
+    }
 
     // If Cloudinary is configured, try uploading there
     if (useCloudinary) {
@@ -37,23 +39,50 @@ export async function POST(req) {
           const mime = matches[1]
           const data = matches[2]
           const dataUri = `data:${mime};base64,${data}`
-          console.log('upload: uploading base64 image to cloudinary', { folder, mime })
-          const res = await cloudinary.uploader.upload(dataUri, { folder: folder || 'uploads' })
-          console.log('upload: cloudinary upload success', { url: res.secure_url })
-          return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+          
+          // Validate base64 size (max ~20MB)
+          if (data.length > 20 * 1024 * 1024) {
+            return new Response(JSON.stringify({ error: 'Image file too large (max 20MB)' }), { status: 400, headers: { 'content-type': 'application/json' } })
+          }
+          
+          console.log('upload: uploading base64 image to cloudinary', { folder, mime, size: data.length })
+          const res = await cloudinary.uploader.upload(dataUri, { 
+            folder: folder || 'uploads',
+            resource_type: 'auto',
+            timeout: 60000,
+          })
+          console.log('upload: cloudinary upload success', { url: res.secure_url, public_id: res.public_id })
+          return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary', public_id: res.public_id }), { status: 200, headers: { 'content-type': 'application/json' } })
         } else {
           // If it's a remote URL, tell Cloudinary to fetch it
           console.log('upload: uploading remote URL to cloudinary', { image: image.substring(0, 50), folder })
-          const res = await cloudinary.uploader.upload(image, { folder: folder || 'uploads', resource_type: 'image' })
-          console.log('upload: cloudinary upload success', { url: res.secure_url })
-          return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+          const res = await cloudinary.uploader.upload(image, { 
+            folder: folder || 'uploads', 
+            resource_type: 'auto',
+            timeout: 60000,
+          })
+          console.log('upload: cloudinary upload success', { url: res.secure_url, public_id: res.public_id })
+          return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary', public_id: res.public_id }), { status: 200, headers: { 'content-type': 'application/json' } })
         }
       } catch (cloudinaryErr) {
-        console.error('upload: cloudinary upload failed', { error: cloudinaryErr.message, code: cloudinaryErr.code })
-        // Fall through to local upload if cloudinary fails
+        console.error('upload: cloudinary upload failed', { 
+          error: cloudinaryErr.message, 
+          code: cloudinaryErr.code,
+          status: cloudinaryErr.status,
+          http_code: cloudinaryErr.http_code,
+        })
+        // Only fall through to local if not a configuration error
+        if (cloudinaryErr.message && (cloudinaryErr.message.includes('signature') || cloudinaryErr.message.includes('unauthorized'))) {
+          return new Response(JSON.stringify({ error: 'Cloudinary authentication failed', details: cloudinaryErr.message }), { status: 500, headers: { 'content-type': 'application/json' } })
+        }
+        console.log('upload: falling back to local storage')
       }
     } else {
-      console.log('upload: cloudinary not configured', { hasCloudName: Boolean(process.env.CLOUDINARY_CLOUD_NAME), hasApiKey: Boolean(process.env.CLOUDINARY_API_KEY), hasApiSecret: Boolean(process.env.CLOUDINARY_API_SECRET) })
+      console.log('upload: cloudinary not configured', { 
+        hasCloudName: Boolean(process.env.CLOUDINARY_CLOUD_NAME), 
+        hasApiKey: Boolean(process.env.CLOUDINARY_API_KEY), 
+        hasApiSecret: Boolean(process.env.CLOUDINARY_API_SECRET) 
+      })
     }
 
     // Fallback: save base64 data URL to public/uploads
