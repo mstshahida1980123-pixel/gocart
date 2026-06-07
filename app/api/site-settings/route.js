@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET
 
 const safeJsonParse = (value) => {
   if (Array.isArray(value)) return value
@@ -51,8 +51,8 @@ const safeJsonParseObject = (value, fallback) => {
 }
 
 const safeJsonStringify = (value, fallback) => {
-  if (typeof value === 'object' && value !== null) return JSON.stringify(value)
   if (Array.isArray(value)) return JSON.stringify(value)
+  if (typeof value === 'object' && value !== null) return JSON.stringify(value)
   if (typeof value === 'string' && value.trim()) return value
   return fallback
 }
@@ -89,26 +89,8 @@ const defaultSettings = {
     { text: 'Privacy Policy', url: '/' },
   ]),
   socialLinks: JSON.stringify([]),
+  heroBanner: JSON.stringify(defaultHeroBanner),
   copyrightText: 'Copyright 2025 © gocart All Right Reserved.',
-}
-
-// Read heroBanner via raw SQL (bypasses Prisma client type system)
-async function getHeroBannerRaw() {
-  try {
-    const rows = await prisma.$queryRawUnsafe(`SELECT heroBanner FROM SiteSetting WHERE id = 'site'`)
-    return rows?.[0]?.heroBanner || ''
-  } catch {
-    return ''
-  }
-}
-
-// Save heroBanner via raw SQL (bypasses Prisma client type system)
-async function setHeroBannerRaw(value) {
-  try {
-    await prisma.$executeRawUnsafe(`UPDATE SiteSetting SET heroBanner = ? WHERE id = 'site'`, value)
-  } catch (err) {
-    console.error('Failed to save heroBanner via raw SQL', err)
-  }
 }
 
 export async function GET(req) {
@@ -119,10 +101,6 @@ export async function GET(req) {
       create: defaultSettings,
     })
 
-    // Read heroBanner separately via raw SQL
-    const heroBannerRaw = await getHeroBannerRaw()
-    const heroBanner = safeJsonParseObject(heroBannerRaw, defaultHeroBanner)
-
     const parsed = {
       ...siteSetting,
       siteName: siteSetting.siteName || 'gocart',
@@ -131,7 +109,7 @@ export async function GET(req) {
       footerWebsite: safeJsonParse(siteSetting.footerWebsite),
       logoImage: siteSetting.logoImage || '',
       socialLinks: safeJsonParse(siteSetting.socialLinks),
-      heroBanner,
+      heroBanner: safeJsonParseObject(siteSetting.heroBanner, defaultHeroBanner),
     }
     return new Response(JSON.stringify({ siteSetting: parsed }), { status: 200, headers: { 'content-type': 'application/json' } })
   } catch (err) {
@@ -147,15 +125,24 @@ export async function PUT(req) {
       console.error('site-settings PUT unauthorized', {
         tokenPresent: Boolean(token),
         role: token?.role,
-        secret: Boolean(process.env.NEXTAUTH_SECRET),
+        secret: Boolean(NEXTAUTH_SECRET),
       })
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'content-type': 'application/json' } })
     }
 
     const body = await req.json()
+    if (!body || typeof body !== 'object') {
+      return new Response(JSON.stringify({ error: 'Invalid request body' }), { status: 400, headers: { 'content-type': 'application/json' } })
+    }
+
     const existing = await prisma.siteSetting.findUnique({ where: { id: 'site' } })
 
-    // updateData does NOT include heroBanner — handled separately via raw SQL
+    let heroBanner = existing?.heroBanner || JSON.stringify(defaultHeroBanner)
+    if (body.heroBanner !== undefined && body.heroBanner !== null) {
+      heroBanner = safeJsonStringify(body.heroBanner, JSON.stringify(defaultHeroBanner))
+      console.log('site-settings heroBanner updated', { heroBanner: heroBanner.substring(0, 100) })
+    }
+
     const updateData = {
       siteName: body.siteName !== undefined ? body.siteName : (existing?.siteName || defaultSettings.siteName),
       phone: body.phone !== undefined ? body.phone : (existing?.phone || defaultSettings.phone),
@@ -174,6 +161,7 @@ export async function PUT(req) {
       footerWebsite: body.footerWebsite !== undefined ? safeJsonStringify(body.footerWebsite, defaultSettings.footerWebsite) : (existing?.footerWebsite || defaultSettings.footerWebsite),
       socialLinks: body.socialLinks !== undefined ? safeJsonStringify(body.socialLinks, defaultSettings.socialLinks) : (existing?.socialLinks || defaultSettings.socialLinks),
       copyrightText: body.copyrightText !== undefined ? body.copyrightText : (existing?.copyrightText ?? defaultSettings.copyrightText),
+      heroBanner,
     }
 
     const siteSetting = await prisma.siteSetting.upsert({
@@ -185,15 +173,10 @@ export async function PUT(req) {
       },
     })
 
-    // Save heroBanner separately via raw SQL
-    if (body.heroBanner !== undefined) {
-      const heroBannerJson = safeJsonStringify(body.heroBanner, JSON.stringify(defaultHeroBanner))
-      await setHeroBannerRaw(heroBannerJson)
+    if (!siteSetting) {
+      console.error('site-settings PUT: upsert returned null')
+      return new Response(JSON.stringify({ error: 'Failed to save site settings' }), { status: 500, headers: { 'content-type': 'application/json' } })
     }
-
-    // Read back heroBanner
-    const heroBannerRaw = await getHeroBannerRaw()
-    const heroBanner = safeJsonParseObject(heroBannerRaw, defaultHeroBanner)
 
     const parsed = {
       ...siteSetting,
@@ -202,11 +185,12 @@ export async function PUT(req) {
       footerWebsite: safeJsonParse(siteSetting.footerWebsite),
       logoImage: siteSetting.logoImage || '',
       socialLinks: safeJsonParse(siteSetting.socialLinks),
-      heroBanner,
+      heroBanner: safeJsonParseObject(siteSetting.heroBanner, defaultHeroBanner),
     }
+    console.log('site-settings PUT success', { id: siteSetting.id, heroBanner: Boolean(siteSetting.heroBanner) })
     return new Response(JSON.stringify({ siteSetting: parsed }), { status: 200, headers: { 'content-type': 'application/json' } })
   } catch (err) {
-    console.error('site-settings PUT error', err)
-    return new Response(JSON.stringify({ error: 'Failed to update site settings' }), { status: 500, headers: { 'content-type': 'application/json' } })
+    console.error('site-settings PUT error', { message: err.message, stack: err.stack })
+    return new Response(JSON.stringify({ error: 'Failed to update site settings', details: process.env.NODE_ENV === 'development' ? String(err) : undefined }), { status: 500, headers: { 'content-type': 'application/json' } })
   }
 }

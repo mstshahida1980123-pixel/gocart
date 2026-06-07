@@ -13,7 +13,7 @@ cloudinary.config({
 export async function POST(req) {
   try {
     // Only admins may upload files
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     if (!token || token.role !== 'ADMIN') {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
@@ -25,24 +25,35 @@ export async function POST(req) {
     const { image, folder } = body
     if (!image) return new Response(JSON.stringify({ error: 'No image provided' }), { status: 400, headers: { 'content-type': 'application/json' } })
 
-    const useCloudinary = process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
+    const useCloudinary = Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET)
 
     // If Cloudinary is configured, try uploading there
     if (useCloudinary) {
-      // Accept base64 data URLs or remote URLs
-      if (image.startsWith('data:')) {
-        const matches = image.match(/^data:(.+);base64,(.+)$/)
-        if (!matches) return new Response(JSON.stringify({ error: 'Invalid data URL' }), { status: 400, headers: { 'content-type': 'application/json' } })
-        const mime = matches[1]
-        const data = matches[2]
-        const dataUri = `data:${mime};base64,${data}`
-        const res = await cloudinary.uploader.upload(dataUri, { folder: folder || 'uploads' })
-        return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
-      } else {
-        // If it's a remote URL, tell Cloudinary to fetch it
-        const res = await cloudinary.uploader.upload(image, { folder: folder || 'uploads', resource_type: 'image' })
-        return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+      try {
+        // Accept base64 data URLs or remote URLs
+        if (image.startsWith('data:')) {
+          const matches = image.match(/^data:(.+);base64,(.+)$/)
+          if (!matches) return new Response(JSON.stringify({ error: 'Invalid data URL format' }), { status: 400, headers: { 'content-type': 'application/json' } })
+          const mime = matches[1]
+          const data = matches[2]
+          const dataUri = `data:${mime};base64,${data}`
+          console.log('upload: uploading base64 image to cloudinary', { folder, mime })
+          const res = await cloudinary.uploader.upload(dataUri, { folder: folder || 'uploads' })
+          console.log('upload: cloudinary upload success', { url: res.secure_url })
+          return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+        } else {
+          // If it's a remote URL, tell Cloudinary to fetch it
+          console.log('upload: uploading remote URL to cloudinary', { image: image.substring(0, 50), folder })
+          const res = await cloudinary.uploader.upload(image, { folder: folder || 'uploads', resource_type: 'image' })
+          console.log('upload: cloudinary upload success', { url: res.secure_url })
+          return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+        }
+      } catch (cloudinaryErr) {
+        console.error('upload: cloudinary upload failed', { error: cloudinaryErr.message, code: cloudinaryErr.code })
+        // Fall through to local upload if cloudinary fails
       }
+    } else {
+      console.log('upload: cloudinary not configured', { hasCloudName: Boolean(process.env.CLOUDINARY_CLOUD_NAME), hasApiKey: Boolean(process.env.CLOUDINARY_API_KEY), hasApiSecret: Boolean(process.env.CLOUDINARY_API_SECRET) })
     }
 
     // Fallback: save base64 data URL to public/uploads
@@ -65,6 +76,7 @@ export async function POST(req) {
     // If it's a URL, return it as-is
     return new Response(JSON.stringify({ url: image }), { status: 200, headers: { 'content-type': 'application/json' } })
   } catch (err) {
-    return new Response(JSON.stringify({ error: 'Upload failed', details: String(err) }), { status: 500, headers: { 'content-type': 'application/json' } })
+    console.error('upload: POST error', { message: err.message, stack: err.stack })
+    return new Response(JSON.stringify({ error: 'Upload failed', details: process.env.NODE_ENV === 'development' ? String(err) : undefined }), { status: 500, headers: { 'content-type': 'application/json' } })
   }
 }
