@@ -12,7 +12,7 @@ export async function GET(req, { params }) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), { status: 400, headers: { 'content-type': 'application/json' } })
     }
 
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     
     // Fetch the order
     let order

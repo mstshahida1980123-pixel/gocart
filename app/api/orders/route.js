@@ -7,7 +7,7 @@ function getUserIdFromToken(token) {
 
 export async function GET(req) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     // allow guests: return empty list if not authenticated
     if (!token) return new Response(JSON.stringify({ orders: [] }), { status: 200, headers: { 'content-type': 'application/json' } })
     const userId = getUserIdFromToken(token)
@@ -36,7 +36,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     // allow guest checkout: token optional
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     const userId = token ? getUserIdFromToken(token) : undefined
     const body = await req.json()
     const { addressId, items, paymentMethod, coupon, deliveryCharge, transactionId } = body

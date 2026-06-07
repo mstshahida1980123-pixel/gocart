@@ -50,7 +50,7 @@ export const authOptions = {
       return session
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
 }
 
 const handler = NextAuth(authOptions)

@@ -44,7 +44,7 @@ export async function GET(req) {
 
     let token = null
     try {
-      token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+      token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     } catch (authErr) {
       console.warn('GET /api/ratings getToken failed:', authErr?.message || authErr)
     }
@@ -114,7 +114,7 @@ export async function POST(req) {
 
     let userId = null
     try {
-      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
       if (token) {
         userId = getUserIdFromToken(token)
       }

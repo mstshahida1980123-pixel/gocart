@@ -4,7 +4,7 @@ import { getToken } from 'next-auth/jwt'
 export async function DELETE(req, { params }) {
   try {
     // allow deleting address by owner; if no token, allow deletion (guest-created address)
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     const userId = token ? (token.sub || token.id || token.user?.id) : undefined
     const { id } = await params
     const addr = await prisma.address.findUnique({ where: { id } })

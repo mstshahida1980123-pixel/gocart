@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma'
 import { getToken } from 'next-auth/jwt'
 
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || 'development-nextauth-secret'
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET || 'development-nextauth-secret'
 
 export async function GET(req) {
   try {

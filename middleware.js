@@ -9,7 +9,7 @@ export async function middleware(req) {
     return NextResponse.next()
   }
 
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
   const role = token?.role
 
   // (store routes removed in single-vendor mode)

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(req) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     if (!token || token.role !== 'ADMIN') {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
@@ -36,7 +36,7 @@ export async function GET(req) {
 
 export async function DELETE(req) {
   try {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET })
     if (!token || token.role !== 'ADMIN') {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
