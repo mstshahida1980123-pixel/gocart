@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cmd /c \"vercel env run -e production -- cmd /c echo %DATABASE_URL%\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

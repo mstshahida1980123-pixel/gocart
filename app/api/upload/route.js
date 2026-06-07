@@ -1,6 +1,14 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { getToken } from 'next-auth/jwt'
+import { v2 as cloudinary } from 'cloudinary'
+
+// Configure Cloudinary from env (if provided)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export async function POST(req) {
   try {
@@ -17,11 +25,30 @@ export async function POST(req) {
     const { image, folder } = body
     if (!image) return new Response(JSON.stringify({ error: 'No image provided' }), { status: 400, headers: { 'content-type': 'application/json' } })
 
-    // Fallback only: save base64 data URL to public/uploads
+    const useCloudinary = process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET
+
+    // If Cloudinary is configured, try uploading there
+    if (useCloudinary) {
+      // Accept base64 data URLs or remote URLs
+      if (image.startsWith('data:')) {
+        const matches = image.match(/^data:(.+);base64,(.+)$/)
+        if (!matches) return new Response(JSON.stringify({ error: 'Invalid data URL' }), { status: 400, headers: { 'content-type': 'application/json' } })
+        const mime = matches[1]
+        const data = matches[2]
+        const dataUri = `data:${mime};base64,${data}`
+        const res = await cloudinary.uploader.upload(dataUri, { folder: folder || 'uploads' })
+        return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+      } else {
+        // If it's a remote URL, tell Cloudinary to fetch it
+        const res = await cloudinary.uploader.upload(image, { folder: folder || 'uploads', resource_type: 'image' })
+        return new Response(JSON.stringify({ url: res.secure_url, provider: 'cloudinary' }), { status: 200, headers: { 'content-type': 'application/json' } })
+      }
+    }
+
+    // Fallback: save base64 data URL to public/uploads
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     await fs.mkdir(uploadsDir, { recursive: true })
 
-    // accept data URLs or remote urls
     if (image.startsWith('data:')) {
       const matches = image.match(/^data:(.+);base64,(.+)$/)
       if (!matches) return new Response(JSON.stringify({ error: 'Invalid data URL' }), { status: 400, headers: { 'content-type': 'application/json' } })
