@@ -2,10 +2,10 @@
 import { Search, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSelector } from "react-redux";
 import { useSession, signOut } from 'next-auth/react'
-import { fetchSiteSettings } from "@/lib/siteSettings";
+import { SiteSettingsContext } from '@/lib/siteSettingsContext'
 
 const Navbar = () => {
 
@@ -18,6 +18,7 @@ const Navbar = () => {
     const [navLinks, setNavLinks] = useState(null)
     const [logoImage, setLogoImage] = useState('')
     const [siteName, setSiteName] = useState('gocart')
+    const { settings, isLoading } = useContext(SiteSettingsContext)
 
     const handleSearch = (e) => {
         e.preventDefault()
@@ -25,20 +26,14 @@ const Navbar = () => {
     }
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const j = await fetchSiteSettings()
-                if (j.siteSetting) {
-                    if (Array.isArray(j.siteSetting.headerNav)) setNavLinks(j.siteSetting.headerNav)
-                    setLogoImage(j.siteSetting.logoImage || '')
-                    setSiteName(j.siteSetting.siteName || 'gocart')
-                }
-            } catch (err) {
-                // ignore
-            }
+        if (!isLoading && settings) {
+            if (Array.isArray(settings.headerNav)) setNavLinks(settings.headerNav)
+            setLogoImage(settings.logoImage || '')
+            setSiteName(settings.siteName || 'gocart')
         }
-        load()
-    }, [])
+    }, [isLoading, settings])
+
+    if (isLoading) return null
 
     return (
         <nav className="relative bg-white">

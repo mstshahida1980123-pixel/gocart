@@ -2,60 +2,18 @@
 import { ArrowRightIcon, ChevronRightIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import React from 'react'
+import React, { useContext } from 'react'
 import CategoriesMarquee from './CategoriesMarquee'
-import { fetchSiteSettings } from '@/lib/siteSettings'
+import { SiteSettingsContext } from '@/lib/siteSettingsContext'
 
 const Hero = () => {
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
-    const [heroBanner, setHeroBanner] = React.useState({
-        mainBanner: {
-            badgeText: 'NEWS',
-            badgeSideText: 'Free Shipping on Orders Above $50!',
-            largeHeadline: "Gadgets you'll love.",
-            smallHeadline: "Prices you'll trust.",
-            startsFromToggle: true,
-            price: '4.90',
-            buttonText: 'LEARN MORE',
-            buttonLink: '/',
-            image: '',
-            bgColor: '',
-        },
-        topRightBanner: {
-            title: 'Best products',
-            link: '/',
-            image: '',
-            bgColor: '',
-        },
-        bottomRightBanner: {
-            title: '20% discounts',
-            link: '/',
-            image: '',
-            bgColor: '',
-        }
-    })
+    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const heroBanner = settings?.heroBanner ?? null
 
-    React.useEffect(() => {
-        const load = async () => {
-            try {
-                const j = await fetchSiteSettings()
-                if (j.siteSetting && j.siteSetting.heroBanner) {
-                    setHeroBanner(prev => {
-                        const fetched = j.siteSetting.heroBanner
-                        return {
-                            mainBanner: { ...prev.mainBanner, ...fetched.mainBanner },
-                            topRightBanner: { ...prev.topRightBanner, ...fetched.topRightBanner },
-                            bottomRightBanner: { ...prev.bottomRightBanner, ...fetched.bottomRightBanner }
-                        }
-                    })
-                }
-            } catch (err) {
-                // ignore
-            }
-        }
-        load()
-    }, [])
+    if (isLoading) return null
+    if (!heroBanner) return null
 
     const mainImg = heroBanner?.mainBanner?.image || null
     const mainImgProps = mainImg ? { width: 400, height: 400, unoptimized: true } : {}

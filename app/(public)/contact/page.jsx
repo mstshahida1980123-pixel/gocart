@@ -1,7 +1,7 @@
 "use client"
 import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin, Youtube } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { fetchSiteSettings } from '@/lib/siteSettings'
+import { useEffect, useState, useContext } from 'react'
+import { SiteSettingsContext } from '@/lib/siteSettingsContext'
 
 const parseSocialLinks = (value) => {
     if (Array.isArray(value)) return value
@@ -14,23 +14,18 @@ const parseSocialLinks = (value) => {
 }
 
 export default function ContactPage() {
-    const [settings, setSettings] = useState({ phone: '+1 (800) 322-1384', email: 'support@gocart.com', address: '425 Market Street, San Francisco, CA', socialLinks: [] })
+    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const [localSettings, setLocalSettings] = useState({ phone: '+1 (800) 322-1384', email: 'support@gocart.com', address: '425 Market Street, San Francisco, CA', socialLinks: [] })
     const [form, setForm] = useState({ name: '', email: '', message: '' })
     const [status, setStatus] = useState('')
 
     useEffect(() => {
-        const loadSettings = async () => {
-            try {
-                const json = await fetchSiteSettings()
-                if (json.siteSetting) {
-                    setSettings(json.siteSetting)
-                }
-            } catch (err) {
-                console.error('Failed to load site settings', err)
-            }
+        if (!isLoading && settings) {
+            setLocalSettings(settings)
         }
-        loadSettings()
-    }, [])
+    }, [isLoading, settings])
+
+    if (isLoading) return null
 
     const handleChange = (e) => {
         setForm({ ...form, [e.target.name]: e.target.value })
@@ -92,21 +87,21 @@ export default function ContactPage() {
                                         <Phone size={24} className="text-emerald-600" />
                                         <div>
                                             <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Phone</p>
-                                            <p className="mt-2 text-lg text-slate-950 font-medium">{settings.phone}</p>
+                                                                    <p className="mt-2 text-lg text-slate-950 font-medium">{localSettings.phone}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                                         <Mail size={24} className="text-emerald-600" />
                                         <div>
                                             <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Email</p>
-                                            <p className="mt-2 text-lg text-slate-950 font-medium">{settings.email}</p>
+                                            <p className="mt-2 text-lg text-slate-950 font-medium">{localSettings.email}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-start gap-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                                         <MapPin size={24} className="text-emerald-600" />
                                         <div>
                                             <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Address</p>
-                                            <p className="mt-2 text-lg text-slate-950 font-medium">{settings.address}</p>
+                                            <p className="mt-2 text-lg text-slate-950 font-medium">{localSettings.address}</p>
                                         </div>
                                     </div>
                                 </div>

@@ -1,7 +1,7 @@
 "use client"
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import Link from "next/link";
-import { fetchSiteSettings } from "@/lib/siteSettings";
+import { SiteSettingsContext } from '@/lib/siteSettingsContext'
 
 const Footer = () => {
 
@@ -52,52 +52,42 @@ const Footer = () => {
         }
     ]);
 
-    const [settings, setSettings] = useState(null)
+    const { settings, isLoading } = useContext(SiteSettingsContext)
     const [siteName, setSiteName] = useState('gocart')
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const j = await fetchSiteSettings()
-                if (j.siteSetting) {
-                    const s = j.siteSetting
-                    setSettings(s)
-                    setSiteName(s.siteName || 'gocart')
-                    const prodLinks = (parseJsonOrArray(s.footerProducts) || []).map(i => ({ text: i.text || i.name || '', path: i.url || '/' }))
-                    const webLinks = (parseJsonOrArray(s.footerWebsite) || []).map(i => ({ text: i.text || i.name || '', path: i.url || '/' }))
-                    setLinkSections([
-                        {
-                            title: 'PRODUCTS',
-                            links: prodLinks.length ? prodLinks : [
-                                { text: 'Earphones', path: '/', icon: null },
-                                { text: 'Headphones', path: '/', icon: null },
-                                { text: 'Smartphones', path: '/', icon: null },
-                                { text: 'Laptops', path: '/', icon: null },
-                            ]
-                        },
-                        {
-                            title: 'WEBSITE',
-                            links: webLinks.length ? webLinks : [
-                                { text: 'Home', path: '/', icon: null },
-                                { text: 'Privacy Policy', path: '/', icon: null },
-                            ]
-                        },
-                        {
-                            title: 'CONTACT',
-                            links: [
-                                { text: s.phone || '+1-212-456-7890', path: '/contact', icon: PhoneIcon },
-                                { text: s.email || 'contact@example.com', path: '/contact', icon: MailIcon },
-                                { text: s.address || '794 Francisco, 94102', path: '/', icon: MapPinIcon }
-                            ]
-                        }
-                    ])
+        if (!isLoading && settings) {
+            setSiteName(settings.siteName || 'gocart')
+            const prodLinks = (parseJsonOrArray(settings.footerProducts) || []).map(i => ({ text: i.text || i.name || '', path: i.url || '/' }))
+            const webLinks = (parseJsonOrArray(settings.footerWebsite) || []).map(i => ({ text: i.text || i.name || '', path: i.url || '/' }))
+            setLinkSections([
+                {
+                    title: 'PRODUCTS',
+                    links: prodLinks.length ? prodLinks : [
+                        { text: 'Earphones', path: '/', icon: null },
+                        { text: 'Headphones', path: '/', icon: null },
+                        { text: 'Smartphones', path: '/', icon: null },
+                        { text: 'Laptops', path: '/', icon: null },
+                    ]
+                },
+                {
+                    title: 'WEBSITE',
+                    links: webLinks.length ? webLinks : [
+                        { text: 'Home', path: '/', icon: null },
+                        { text: 'Privacy Policy', path: '/', icon: null },
+                    ]
+                },
+                {
+                    title: 'CONTACT',
+                    links: [
+                        { text: settings.phone || '+1-212-456-7890', path: '/contact', icon: PhoneIcon },
+                        { text: settings.email || 'contact@example.com', path: '/contact', icon: MailIcon },
+                        { text: settings.address || '794 Francisco, 94102', path: '/', icon: MapPinIcon }
+                    ]
                 }
-            } catch (err) {
-                // ignore
-            }
+            ])
         }
-        load()
-    }, [])
+    }, [isLoading, settings])
 
     const iconMap = {
         Facebook: FacebookIcon,
@@ -116,6 +106,7 @@ const Footer = () => {
             icon: iconMap[link.platform] || FacebookIcon,
             link: link.url,
         }))
+    if (isLoading) return null
 
     return (
         <footer className="mx-6 bg-white">

@@ -55,7 +55,7 @@ export default async function RootLayout({ children }) {
                         <iframe src={`https://www.googletagmanager.com/ns.html?id=${googleTagManagerId}`} height="0" width="0" style={{ display: 'none', visibility: 'hidden' }} />
                     </noscript>
                 ) : null}
-                <Providers>
+                <Providers siteSettings={settings}>
                     {children}
                 </Providers>
             </body>
