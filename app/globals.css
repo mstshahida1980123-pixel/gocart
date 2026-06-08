@@ -17,6 +17,20 @@
     }
 }
 
+html, body {
+    overflow-x: hidden;
+}
+
+img, picture, video {
+    max-width: 100%;
+    height: auto;
+}
+
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+}
+
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }

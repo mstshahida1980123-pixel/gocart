@@ -42,8 +42,8 @@ const ProductCard = ({ product }) => {
     }
 
     return (
-        <Link href={`/product/${product.id}`} className=' group max-xl:mx-auto'>
-                <div className='bg-[#F5F5F5] w-full sm:w-60 rounded-lg overflow-hidden relative' style={{height: 240}}>
+        <Link href={`/product/${product.id}`} className='group mx-auto'>
+                <div className='bg-[#F5F5F5] w-full sm:w-60 rounded-lg overflow-hidden relative h-56 sm:h-60'>
                     <div className='relative w-full h-full'>
                         <Image src={coverImage} alt={product.name || 'product image'} fill style={{objectFit: 'cover', objectPosition: 'center'}} className={`transition-transform duration-300 ${inStock ? 'group-hover:scale-105' : 'opacity-60'}`} />
                     </div>
@@ -60,14 +60,14 @@ const ProductCard = ({ product }) => {
                         <div className='absolute bottom-3 right-3 flex gap-2 z-10'>
                             <button 
                                 onClick={handleAddToCart} 
-                                className='bg-white/90 hover:bg-slate-800 text-slate-800 hover:text-white p-2.5 rounded-full shadow-md backdrop-blur-sm transition-all duration-200 active:scale-90 flex items-center justify-center' 
+                                className='bg-white/90 hover:bg-slate-800 text-slate-800 hover:text-white p-2.5 rounded-full shadow-md backdrop-blur-sm transition-all duration-200 active:scale-90 flex items-center justify-center touch-target' 
                                 title="Add to Cart"
                             >
                                 <ShoppingCart size={16} />
                             </button>
                             <button 
                                 onClick={handleQuickOrder} 
-                                className='bg-[#00C950]/90 hover:bg-[#00B040] text-white p-2.5 rounded-full shadow-md backdrop-blur-sm transition-all duration-200 active:scale-90 flex items-center justify-center' 
+                                className='bg-[#00C950]/90 hover:bg-[#00B040] text-white p-2.5 rounded-full shadow-md backdrop-blur-sm transition-all duration-200 active:scale-90 flex items-center justify-center touch-target' 
                                 title="Order now"
                             >
                                 <Zap size={16} />
@@ -75,7 +75,7 @@ const ProductCard = ({ product }) => {
                         </div>
                     )}
                 </div>
-            <div className='flex justify-between gap-3 text-sm text-slate-800 pt-2 max-w-60'>
+            <div className='flex justify-between gap-3 text-sm text-slate-800 pt-2 w-full sm:max-w-60'>
                 <div>
                     <p>{product.name}</p>
                     <div className='flex'>

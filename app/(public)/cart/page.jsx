@@ -54,9 +54,10 @@ export default function Cart() {
                 {/* Title */}
                 <PageTitle heading="My Cart" text="items in your cart" linkText="Add more" />
 
-                <div className="flex items-start justify-between gap-5 max-lg:flex-col">
+                <div className="flex flex-col lg:flex-row items-start justify-between gap-5">
 
-                    <table className="w-full max-w-4xl text-slate-600 table-auto">
+                    <div className="w-full lg:flex-1 overflow-x-auto">
+                        <table className="w-full min-w-[640px] text-slate-600 table-auto">
                         <thead>
                             <tr className="max-sm:text-sm">
                                 <th className="text-left">Product</th>
@@ -92,8 +93,10 @@ export default function Cart() {
                                 ))
                             }
                         </tbody>
-                    </table>
-                    <QuickOrderForm totalPrice={totalPrice} items={cartArray} />
+                    </div>
+                    <div className="w-full lg:w-96 mt-6 lg:mt-0">
+                        <QuickOrderForm totalPrice={totalPrice} items={cartArray} />
+                    </div>
                 </div>
             </div>
         </div>

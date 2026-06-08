@@ -26,20 +26,20 @@ const Hero = () => {
 
     return (
         <div className='mx-6'>
-            <div className='flex max-xl:flex-col gap-8 max-w-7xl mx-auto my-10'>
+            <div className='flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto my-10'>
                 <div 
                     style={heroBanner?.mainBanner?.bgColor ? { backgroundColor: heroBanner.mainBanner.bgColor } : {}}
-                    className={`relative flex-1 flex flex-col rounded-3xl xl:min-h-100 group ${!heroBanner?.mainBanner?.bgColor ? 'bg-green-200' : ''}`}
+                    className={`relative flex-1 flex flex-col rounded-3xl min-h-80 group ${!heroBanner?.mainBanner?.bgColor ? 'bg-green-200' : ''}`}
                 >
-                    <div className='p-5 sm:p-16'>
+                    <div className='p-4 md:p-10'>
                         <div className='inline-flex items-center gap-3 bg-green-300 text-green-600 pr-4 p-1 rounded-full text-xs sm:text-sm'>
-                            <span className='bg-green-600 px-3 py-1 max-sm:ml-1 rounded-full text-white text-xs'>
+                            <span className='bg-green-600 px-3 py-1 rounded-full text-white text-xs'>
                                 {heroBanner?.mainBanner?.badgeText || 'NEWS'}
                             </span> 
                             {heroBanner?.mainBanner?.badgeSideText || 'Free Shipping on Orders Above $50!'} 
                             <ChevronRightIcon className='group-hover:ml-2 transition-all' size={16} />
                         </div>
-                        <h2 className='text-3xl sm:text-5xl leading-[1.2] my-3 font-medium bg-gradient-to-r from-slate-600 to-[#A0FF74] bg-clip-text text-transparent max-w-xs  sm:max-w-md'>
+                        <h2 className='text-xl sm:text-3xl md:text-4xl leading-[1.2] my-3 font-medium bg-gradient-to-r from-slate-600 to-[#A0FF74] bg-clip-text text-transparent max-w-full sm:max-w-md'>
                             {(heroBanner?.mainBanner?.largeHeadline || "Gadgets you'll love.") + " " + (heroBanner?.mainBanner?.smallHeadline || "Prices you'll trust.")}
                         </h2>
                         <div className='text-slate-800 text-sm font-medium mt-4 sm:mt-8'>
@@ -51,11 +51,13 @@ const Hero = () => {
                                 })()}
                             </p>
                         </div>
-                        <Link href={heroBanner?.mainBanner?.buttonLink || '/'}>
-                            <button className='bg-slate-800 text-white text-sm py-2.5 px-7 sm:py-5 sm:px-12 mt-4 sm:mt-10 rounded-md hover:bg-slate-900 hover:scale-103 active:scale-95 transition'>
-                                {heroBanner?.mainBanner?.buttonText || 'LEARN MORE'}
-                            </button>
-                        </Link>
+                        <div className='mt-4 sm:mt-10 flex flex-col sm:flex-row gap-3'>
+                            <Link href={heroBanner?.mainBanner?.buttonLink || '/'}>
+                                <button className='bg-slate-800 text-white text-sm py-3 px-6 rounded-md hover:bg-slate-900 active:scale-95 transition touch-target'>
+                                    {heroBanner?.mainBanner?.buttonText || 'LEARN MORE'}
+                                </button>
+                            </Link>
+                        </div>
                     </div>
                     {mainImg && <Image className='sm:absolute bottom-0 right-0 md:right-10 w-full sm:max-w-sm' src={mainImg} alt="" {...mainImgProps} />}
                 </div>

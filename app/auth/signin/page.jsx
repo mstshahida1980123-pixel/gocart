@@ -69,7 +69,7 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 touch-target"
           >
             {loading ? 'Signing in...' : 'Sign in'}
           </button>

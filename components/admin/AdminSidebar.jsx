@@ -7,7 +7,7 @@ import { HomeIcon, ShieldCheckIcon, StoreIcon, TicketPercentIcon, MessageCircle,
 import Image from "next/image"
 import Link from "next/link"
 
-const AdminSidebar = () => {
+const AdminSidebar = (props) => {
 
     const pathname = usePathname()
     const [siteName, setSiteName] = useState('gocart')
@@ -36,7 +36,9 @@ const AdminSidebar = () => {
     ]
 
     return (
-        <div className="inline-flex h-full flex-col gap-6 border-r border-slate-200 sm:w-64 p-4 bg-white">
+        <>
+        {/* Desktop sidebar */}
+        <div className="hidden lg:inline-flex h-full flex-col gap-6 border-r border-slate-200 w-64 p-4 bg-white">
             <div className="flex flex-col gap-3 justify-center items-center pt-2 pb-4">
                 {logoImage && <Image className="w-14 h-14 rounded-full" src={logoImage} alt="logo" width={80} height={80} unoptimized />}
                 <p className="text-slate-700 font-medium">Hi, Admin</p>
@@ -54,6 +56,30 @@ const AdminSidebar = () => {
                 }
             </nav>
         </div>
+
+        {/* Mobile overlay sidebar */}
+        {/** mobileOpen prop handled by parent via class toggling */}
+        <div className={`lg:hidden fixed inset-0 z-50 transform ${props?.mobileOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform`}>
+            <div className="absolute inset-0 bg-black/40" onClick={() => props?.onClose && props.onClose()} />
+            <div className="relative w-72 h-full bg-white p-4 overflow-y-auto">
+                <div className="flex flex-col gap-3 justify-center items-center pt-2 pb-4">
+                    {logoImage && <Image className="w-14 h-14 rounded-full" src={logoImage} alt="logo" width={80} height={80} unoptimized />}
+                    <p className="text-slate-700 font-medium">Hi, Admin</p>
+                    <p className="text-sm text-slate-500">{siteName}</p>
+                </div>
+                <nav className="mt-4 flex-1">
+                {
+                    sidebarLinks.map((link, index) => (
+                        <Link key={index} href={link.href} className={`group flex items-center gap-3 text-slate-600 hover:bg-slate-50 p-3 rounded-md transition ${pathname === link.href ? 'bg-green-50 text-green-700 font-semibold' : ''}`}>
+                            <link.icon size={18} className="text-slate-400 group-hover:text-green-600" />
+                            <span className="ml-2">{link.name}</span>
+                        </Link>
+                    ))
+                }
+                </nav>
+            </div>
+        </div>
+        </>
     )
 }
 

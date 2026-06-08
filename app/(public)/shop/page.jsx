@@ -30,7 +30,7 @@ import { useSelector } from "react-redux"
                         <button onClick={() => router.push('/shop')} className="mt-4 text-green-500 hover:underline">View all products</button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 sm:flex flex-wrap gap-6 xl:gap-12 mx-auto mb-32">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 xl:gap-12 mx-auto mb-32">
                         {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
                     </div>
                 )}

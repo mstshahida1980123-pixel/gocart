@@ -20,6 +20,8 @@ const Navbar = () => {
     const [siteName, setSiteName] = useState('gocart')
     const { settings, isLoading } = useSiteSettings()
 
+    const [menuOpen, setMenuOpen] = useState(false)
+
     const handleSearch = (e) => {
         e.preventDefault()
         router.push(`/shop?search=${search}`)
@@ -54,7 +56,7 @@ const Navbar = () => {
                     </Link>
 
                     {/* Desktop Menu */}
-                    <div className="hidden sm:flex items-center gap-2 lg:gap-4 text-slate-600">
+                    <div className="hidden md:flex items-center gap-2 lg:gap-4 text-slate-600">
                         {(navLinks || [
                             { name: 'Home', url: '/' },
                             { name: 'Shop', url: '/shop' },
@@ -104,8 +106,13 @@ const Navbar = () => {
 
                     </div>
 
-                    {/* Mobile User Button  */}
-                    <div className="sm:hidden flex items-center gap-4">
+                    {/* Mobile User Button & Hamburger */}
+                    <div className="md:hidden flex items-center gap-4">
+                        <button onClick={() => setMenuOpen(v => !v)} aria-label="Menu" className="p-2 rounded-md touch-target">
+                            <div className="w-6 h-0.5 bg-slate-700 mb-1" />
+                            <div className="w-6 h-0.5 bg-slate-700 mb-1" />
+                            <div className="w-6 h-0.5 bg-slate-700" />
+                        </button>
                         <Link href="/cart" className="relative flex items-center gap-2 text-slate-600">
                             <ShoppingCart size={18} />
                             <button className="absolute -top-1 left-3 text-[8px] text-white bg-slate-600 size-3.5 rounded-full">{cartCount}</button>
@@ -124,6 +131,39 @@ const Navbar = () => {
                 </div>
             </div>
             <hr className="border-gray-300" />
+
+            {/* Mobile Menu Drawer */}
+            <div className={`md:hidden transition-transform origin-top ${menuOpen ? 'translate-y-0' : '-translate-y-full'}`}>
+                <div className="bg-white shadow-md border-t border-slate-200">
+                    <div className="px-4 py-3">
+                        <form onSubmit={handleSearch} className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-md">
+                            <Search size={18} className="text-slate-600" />
+                            <input className="w-full bg-transparent outline-none placeholder-slate-600 text-sm" type="text" placeholder="Search products" value={search} onChange={(e) => setSearch(e.target.value)} required />
+                        </form>
+                    </div>
+                    <div className="px-4 pb-6 space-y-1">
+                        {(navLinks || [
+                            { name: 'Home', url: '/' },
+                            { name: 'Shop', url: '/shop' },
+                            { name: 'Categories', url: '/categories' },
+                            { name: 'About', url: '/about' },
+                            { name: 'Contact', url: '/contact' },
+                        ]).map((l, i) => (
+                            <Link key={i} href={l.url || '/'} className="block w-full text-left px-3 py-3 rounded-md text-base touch-target hover:bg-slate-50">{l.name || l.text}</Link>
+                        ))}
+                        <div className="px-3">
+                            {session?.user ? (
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm">{session.user.name || session.user.email}</span>
+                                    <button onClick={() => signOut()} className="ml-auto bg-slate-200 px-3 py-2 rounded touch-target">Logout</button>
+                                </div>
+                            ) : (
+                                <Link href="/auth/signin" className="block w-full text-center bg-slate-800 text-white py-2 rounded touch-target">Sign in</Link>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </nav>
     )
 }

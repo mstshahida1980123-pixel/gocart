@@ -30,13 +30,15 @@ const AdminLayout = ({ children }) => {
         fetchIsAdmin()
     }, [])
 
+    const [mobileOpen, setMobileOpen] = useState(false)
+
     return loading ? (
         <Loading />
     ) : isAdmin ? (
         <div className="flex flex-col h-screen">
-            <AdminNavbar />
+            <AdminNavbar onToggleMobile={() => setMobileOpen(v => !v)} />
             <div className="flex flex-1 items-start h-full overflow-y-scroll no-scrollbar">
-                    <AdminSidebar />
+                    <AdminSidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
                     <div className="flex-1 h-full p-6 lg:pl-12 lg:pt-12 overflow-y-auto bg-slate-50">
                         <div className="max-w-7xl mx-auto">
                             <div className="bg-white rounded-lg shadow-sm p-6">
