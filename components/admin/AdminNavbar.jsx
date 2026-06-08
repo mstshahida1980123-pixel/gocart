@@ -1,24 +1,15 @@
-'use client'
+ 'use client'
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 const AdminNavbar = () => {
     const [siteName, setSiteName] = useState('gocart')
+    const { settings, isLoading } = useSiteSettings()
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await fetch('/api/site-settings')
-                const j = await res.json()
-                if (res.ok && j.siteSetting) {
-                    setSiteName(j.siteSetting.siteName || 'gocart')
-                }
-            } catch (err) {
-                // ignore
-            }
-        }
-        load()
-    }, [])
+        if (!isLoading && settings) setSiteName(settings.siteName || 'gocart')
+    }, [isLoading, settings])
 
     return (
         <div className="flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200 shadow-sm transition-all">

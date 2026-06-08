@@ -2,14 +2,14 @@
 import { ArrowRightIcon, ChevronRightIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useContext } from 'react'
+import React from 'react'
 import CategoriesMarquee from './CategoriesMarquee'
-import { SiteSettingsContext } from '@/lib/siteSettingsContext'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 const Hero = () => {
 
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$'
-    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const { settings, isLoading } = useSiteSettings()
     const heroBanner = settings?.heroBanner ?? null
 
     if (isLoading) return null

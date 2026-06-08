@@ -1,7 +1,8 @@
-'use client'
+ 'use client'
 
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 import { HomeIcon, ShieldCheckIcon, StoreIcon, TicketPercentIcon, MessageCircle, Settings, StarIcon } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -11,22 +12,14 @@ const AdminSidebar = () => {
     const pathname = usePathname()
     const [siteName, setSiteName] = useState('gocart')
     const [logoImage, setLogoImage] = useState('')
+    const { settings, isLoading } = useSiteSettings()
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await fetch('/api/site-settings')
-                const j = await res.json()
-                if (res.ok && j.siteSetting) {
-                    setSiteName(j.siteSetting.siteName || 'gocart')
-                    setLogoImage(j.siteSetting.logoImage || '')
-                }
-            } catch (err) {
-                // ignore
-            }
+        if (!isLoading && settings) {
+            setSiteName(settings.siteName || 'gocart')
+            setLogoImage(settings.logoImage || '')
         }
-        load()
-    }, [])
+    }, [isLoading, settings])
 
     const sidebarLinks = [
         { name: 'Dashboard', href: '/admin', icon: HomeIcon },

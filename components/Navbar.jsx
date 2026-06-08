@@ -2,10 +2,10 @@
 import { Search, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useSession, signOut } from 'next-auth/react'
-import { SiteSettingsContext } from '@/lib/siteSettingsContext'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 const Navbar = () => {
 
@@ -18,7 +18,7 @@ const Navbar = () => {
     const [navLinks, setNavLinks] = useState(null)
     const [logoImage, setLogoImage] = useState('')
     const [siteName, setSiteName] = useState('gocart')
-    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const { settings, isLoading } = useSiteSettings()
 
     const handleSearch = (e) => {
         e.preventDefault()

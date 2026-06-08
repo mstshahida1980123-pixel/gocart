@@ -1,6 +1,5 @@
 import { Outfit } from "next/font/google";
 import Providers from './Providers'
-import prisma from '@/lib/prisma'
 import "./globals.css";
 
 const outfit = Outfit({ subsets: ["latin"], weight: ["400", "500", "600"] });
@@ -12,21 +11,31 @@ const defaultSettings = {
 }
 
 export async function generateMetadata() {
-    const settings = await prisma.siteSetting.findUnique({ where: { id: 'site' } })
-    const siteName = settings?.siteName || 'GoCart'
-    const title = settings?.seoTitle || `${siteName} - Shop smarter`
-    const description = settings?.metaDescription || defaultSettings.description
-    const keywords = settings?.metaKeywords ? settings.metaKeywords.split(',').map((keyword) => keyword.trim()).filter(Boolean) : defaultSettings.keywords
+    try {
+        const res = await fetch('/api/site-settings', { cache: 'no-store' })
+        const json = await res.json()
+        const settings = json?.siteSetting ?? null
+        const siteName = settings?.siteName || 'GoCart'
+        const title = settings?.seoTitle || `${siteName} - Shop smarter`
+        const description = settings?.metaDescription || defaultSettings.description
+        const keywords = settings?.metaKeywords ? settings.metaKeywords.split(',').map((keyword) => keyword.trim()).filter(Boolean) : defaultSettings.keywords
 
-    return {
-        title,
-        description,
-        keywords,
+        return { title, description, keywords }
+    } catch (err) {
+        return { title: defaultSettings.title, description: defaultSettings.description, keywords: defaultSettings.keywords }
     }
 }
 
 export default async function RootLayout({ children }) {
-    const settings = await prisma.siteSetting.findUnique({ where: { id: 'site' } })
+    let settings = null
+    try {
+        const res = await fetch('/api/site-settings', { cache: 'no-store' })
+        const json = await res.json()
+        settings = json?.siteSetting ?? null
+    } catch (err) {
+        settings = null
+    }
+
     const facebookPixelId = settings?.facebookPixelId || ''
     const googleAnalyticsId = settings?.googleAnalyticsId || ''
     const googleTagManagerId = settings?.googleTagManagerId || ''

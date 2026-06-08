@@ -1,7 +1,7 @@
 "use client"
 import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Linkedin, Youtube } from 'lucide-react'
-import { useEffect, useState, useContext } from 'react'
-import { SiteSettingsContext } from '@/lib/siteSettingsContext'
+import { useEffect, useState } from 'react'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 const parseSocialLinks = (value) => {
     if (Array.isArray(value)) return value
@@ -14,7 +14,7 @@ const parseSocialLinks = (value) => {
 }
 
 export default function ContactPage() {
-    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const { settings, isLoading } = useSiteSettings()
     const [localSettings, setLocalSettings] = useState({ phone: '+1 (800) 322-1384', email: 'support@gocart.com', address: '425 Market Street, San Francisco, CA', socialLinks: [] })
     const [form, setForm] = useState({ name: '', email: '', message: '' })
     const [status, setStatus] = useState('')

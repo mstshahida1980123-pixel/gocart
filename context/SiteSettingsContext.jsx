@@ -1,7 +1,11 @@
 'use client'
-import React, { createContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
-export const SiteSettingsContext = createContext({ settings: null, isLoading: true, refresh: async () => {} })
+const SiteSettingsContext = createContext({ settings: null, isLoading: true, refresh: async () => {} })
+
+export function useSiteSettings() {
+  return useContext(SiteSettingsContext)
+}
 
 export default function SiteSettingsProvider({ children, initialData = null }) {
   const [settings, setSettings] = useState(initialData ?? null)
@@ -14,7 +18,7 @@ export default function SiteSettingsProvider({ children, initialData = null }) {
       const json = await res.json()
       const s = json?.siteSetting ?? null
       if (s) {
-        try { localStorage.setItem('siteSettings', JSON.stringify(s)) } catch (err) { /* ignore */ }
+        try { sessionStorage.setItem('siteSettings', JSON.stringify(s)) } catch (err) { /* ignore */ }
         setSettings(s)
       }
       return s
@@ -29,18 +33,16 @@ export default function SiteSettingsProvider({ children, initialData = null }) {
     let mounted = true
 
     if (initialData) {
-      // save server-provided data to cache
-      try { localStorage.setItem('siteSettings', JSON.stringify(initialData)) } catch (err) { /* ignore */ }
+      try { sessionStorage.setItem('siteSettings', JSON.stringify(initialData)) } catch (err) { }
       setSettings(initialData)
       setIsLoading(false)
-      // still revalidate in background
+      // revalidate in background
       fetchAndCache()
       return
     }
 
-    // try cached value first (stale-while-revalidate)
     try {
-      const cached = localStorage.getItem('siteSettings')
+      const cached = sessionStorage.getItem('siteSettings')
       if (cached) {
         const parsed = JSON.parse(cached)
         if (mounted) {
@@ -52,7 +54,6 @@ export default function SiteSettingsProvider({ children, initialData = null }) {
       // ignore
     }
 
-    // fetch fresh
     fetchAndCache()
 
     return () => { mounted = false }

@@ -1,10 +1,12 @@
-'use client'
+ 'use client'
 import { useEffect, useState } from 'react'
 import { Settings } from 'lucide-react'
 import { clearSiteSettingsCache } from '@/lib/siteSettings'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 export default function AdminSiteSettingsPage() {
   const [loading, setLoading] = useState(true)
+  const { settings: ctxSettings, isLoading } = useSiteSettings()
   const [settings, setSettings] = useState({
     siteName: '',
     announcement: '',
@@ -45,21 +47,11 @@ export default function AdminSiteSettingsPage() {
   })
 
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await fetch('/api/site-settings', { credentials: 'include' })
-        const json = await res.json()
-        if (res.ok) {
-          setSettings(normalizeSiteSettings(json.siteSetting))
-        }
-      } catch (err) {
-        console.error('Failed to load site settings', err)
-      } finally {
-        setLoading(false)
-      }
+    if (!isLoading && ctxSettings) {
+      setSettings(normalizeSiteSettings(ctxSettings))
+      setLoading(false)
     }
-    loadSettings()
-  }, [])
+  }, [isLoading, ctxSettings])
 
   const handleChange = (e) => {
     setSettings({ ...settings, [e.target.name]: e.target.value })

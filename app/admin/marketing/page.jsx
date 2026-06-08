@@ -1,10 +1,12 @@
-'use client'
+ 'use client'
 import { useEffect, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { clearSiteSettingsCache } from '@/lib/siteSettings'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 export default function AdminMarketingPage() {
   const [loading, setLoading] = useState(true)
+  const { settings: ctxSettings, isLoading } = useSiteSettings()
   const [settings, setSettings] = useState({
     facebookPixelId: '',
     googleAnalyticsId: '',
@@ -16,28 +18,18 @@ export default function AdminMarketingPage() {
   const [status, setStatus] = useState('')
 
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await fetch('/api/site-settings', { credentials: 'same-origin' })
-        const json = await res.json()
-        if (res.ok) {
-          setSettings({
-            facebookPixelId: json.siteSetting.facebookPixelId || '',
-            googleAnalyticsId: json.siteSetting.googleAnalyticsId || '',
-            googleTagManagerId: json.siteSetting.googleTagManagerId || '',
-            seoTitle: json.siteSetting.seoTitle || '',
-            metaDescription: json.siteSetting.metaDescription || '',
-            metaKeywords: json.siteSetting.metaKeywords || '',
-          })
-        }
-      } catch (err) {
-        console.error('Failed to load settings', err)
-      } finally {
-        setLoading(false)
-      }
+    if (!isLoading && ctxSettings) {
+      setSettings({
+        facebookPixelId: ctxSettings.facebookPixelId || '',
+        googleAnalyticsId: ctxSettings.googleAnalyticsId || '',
+        googleTagManagerId: ctxSettings.googleTagManagerId || '',
+        seoTitle: ctxSettings.seoTitle || '',
+        metaDescription: ctxSettings.metaDescription || '',
+        metaKeywords: ctxSettings.metaKeywords || '',
+      })
+      setLoading(false)
     }
-    loadSettings()
-  }, [])
+  }, [isLoading, ctxSettings])
 
   const handleChange = (e) => {
     setSettings({ ...settings, [e.target.name]: e.target.value })

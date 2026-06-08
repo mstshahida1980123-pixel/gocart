@@ -2,7 +2,7 @@
 import { SessionProvider } from 'next-auth/react'
 import StoreProvider from './StoreProvider'
 import { Toaster } from 'react-hot-toast'
-import SiteSettingsProvider from '@/lib/siteSettingsContext'
+import SiteSettingsProvider from '@/context/SiteSettingsContext'
 
 export default function Providers({ children, siteSettings = null }) {
   return (

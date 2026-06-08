@@ -1,12 +1,12 @@
 'use client'
-import React, { useContext } from 'react'
+import React from 'react'
 import toast from 'react-hot-toast';
-import SiteSettingsProvider, { SiteSettingsContext } from '@/lib/siteSettingsContext'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 export default function Banner() {
 
     const [isOpen, setIsOpen] = React.useState(true);
-    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const { settings, isLoading } = useSiteSettings()
     const announcement = settings?.announcement || ''
 
     React.useEffect(() => {

@@ -1,7 +1,7 @@
 "use client"
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import Link from "next/link";
-import { SiteSettingsContext } from '@/lib/siteSettingsContext'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 const Footer = () => {
 
@@ -52,7 +52,7 @@ const Footer = () => {
         }
     ]);
 
-    const { settings, isLoading } = useContext(SiteSettingsContext)
+    const { settings, isLoading } = useSiteSettings()
     const [siteName, setSiteName] = useState('gocart')
 
     useEffect(() => {

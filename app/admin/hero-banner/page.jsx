@@ -1,8 +1,9 @@
-'use client'
+ 'use client'
 import { useEffect, useState } from 'react'
 import { Sliders, UploadCloud, Check, X, Download, Trash2 } from 'lucide-react'
 import { assets } from '@/assets/assets'
 import { clearSiteSettingsCache } from '@/lib/siteSettings'
+import { useSiteSettings } from '@/context/SiteSettingsContext'
 
 export default function AdminHeroBannerPage() {
   const [loading, setLoading] = useState(true)
@@ -35,50 +36,42 @@ export default function AdminHeroBannerPage() {
     }
   })
 
+  const { settings: ctxSettings, isLoading } = useSiteSettings()
+
   useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const res = await fetch('/api/site-settings', { credentials: 'include' })
-        const json = await res.json()
-        if (res.ok && json.siteSetting) {
-          const fetchedHero = json.siteSetting.heroBanner
-          if (fetchedHero) {
-            setBannerData({
-              mainBanner: {
-                badgeText: fetchedHero.mainBanner?.badgeText || '',
-                badgeSideText: fetchedHero.mainBanner?.badgeSideText || '',
-                largeHeadline: fetchedHero.mainBanner?.largeHeadline || '',
-                smallHeadline: fetchedHero.mainBanner?.smallHeadline || '',
-                startsFromToggle: fetchedHero.mainBanner?.startsFromToggle ?? true,
-                price: fetchedHero.mainBanner?.price || '',
-                buttonText: fetchedHero.mainBanner?.buttonText || '',
-                buttonLink: fetchedHero.mainBanner?.buttonLink || '',
-                image: fetchedHero.mainBanner?.image || '',
-                bgColor: fetchedHero.mainBanner?.bgColor || '',
-              },
-              topRightBanner: {
-                title: fetchedHero.topRightBanner?.title || '',
-                link: fetchedHero.topRightBanner?.link || '',
-                image: fetchedHero.topRightBanner?.image || '',
-                bgColor: fetchedHero.topRightBanner?.bgColor || '',
-              },
-              bottomRightBanner: {
-                title: fetchedHero.bottomRightBanner?.title || '',
-                link: fetchedHero.bottomRightBanner?.link || '',
-                image: fetchedHero.bottomRightBanner?.image || '',
-                bgColor: fetchedHero.bottomRightBanner?.bgColor || '',
-              }
-            })
+    if (!isLoading && ctxSettings) {
+      const fetchedHero = ctxSettings.heroBanner
+      if (fetchedHero) {
+        setBannerData({
+          mainBanner: {
+            badgeText: fetchedHero.mainBanner?.badgeText || '',
+            badgeSideText: fetchedHero.mainBanner?.badgeSideText || '',
+            largeHeadline: fetchedHero.mainBanner?.largeHeadline || '',
+            smallHeadline: fetchedHero.mainBanner?.smallHeadline || '',
+            startsFromToggle: fetchedHero.mainBanner?.startsFromToggle ?? true,
+            price: fetchedHero.mainBanner?.price || '',
+            buttonText: fetchedHero.mainBanner?.buttonText || '',
+            buttonLink: fetchedHero.mainBanner?.buttonLink || '',
+            image: fetchedHero.mainBanner?.image || '',
+            bgColor: fetchedHero.mainBanner?.bgColor || '',
+          },
+          topRightBanner: {
+            title: fetchedHero.topRightBanner?.title || '',
+            link: fetchedHero.topRightBanner?.link || '',
+            image: fetchedHero.topRightBanner?.image || '',
+            bgColor: fetchedHero.topRightBanner?.bgColor || '',
+          },
+          bottomRightBanner: {
+            title: fetchedHero.bottomRightBanner?.title || '',
+            link: fetchedHero.bottomRightBanner?.link || '',
+            image: fetchedHero.bottomRightBanner?.image || '',
+            bgColor: fetchedHero.bottomRightBanner?.bgColor || '',
           }
-        }
-      } catch (err) {
-        console.error('Failed to load settings', err)
-      } finally {
-        setLoading(false)
+        })
       }
+      setLoading(false)
     }
-    loadSettings()
-  }, [])
+  }, [isLoading, ctxSettings])
 
   const handleFieldChange = (bannerKey, fieldName, value) => {
     setBannerData(prev => ({
