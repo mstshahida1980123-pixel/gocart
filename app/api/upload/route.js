@@ -7,8 +7,21 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const missingCloudinaryEnv = [
+  !process.env.CLOUDINARY_CLOUD_NAME && 'CLOUDINARY_CLOUD_NAME',
+  !process.env.CLOUDINARY_API_KEY && 'CLOUDINARY_API_KEY',
+  !process.env.CLOUDINARY_API_SECRET && 'CLOUDINARY_API_SECRET',
+].filter(Boolean);
+
 export async function POST(request) {
   try {
+    if (missingCloudinaryEnv.length) {
+      return NextResponse.json(
+        { error: `Missing Cloudinary env vars: ${missingCloudinaryEnv.join(', ')}` },
+        { status: 500 }
+      );
+    }
+
     const contentType = request.headers.get("content-type") || "";
     let cloudinaryResult;
 
