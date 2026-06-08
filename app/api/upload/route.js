@@ -13,48 +13,58 @@ const missingCloudinaryEnv = [
   !process.env.CLOUDINARY_API_SECRET && 'CLOUDINARY_API_SECRET',
 ].filter(Boolean);
 
-export async function POST(request) {
-  try {
-    if (missingCloudinaryEnv.length) {
-      return NextResponse.json(
-        { error: `Missing Cloudinary env vars: ${missingCloudinaryEnv.join(', ')}` },
-        { status: 500 }
-      );
-    }
+const sendError = (message, status = 500) =>
+  NextResponse.json({ error: message }, { status });
 
+const blobToDataUrl = async (blob) => {
+  const arrayBuffer = await blob.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+  return `data:${blob.type || "application/octet-stream"};base64,${base64}`;
+};
+
+export async function POST(request) {
+  if (missingCloudinaryEnv.length) {
+    return sendError(`Missing Cloudinary env vars: ${missingCloudinaryEnv.join(", ")}`);
+  }
+
+  try {
     const contentType = request.headers.get("content-type") || "";
-    let cloudinaryResult;
+    let uploadSource;
 
     if (contentType.includes("application/json")) {
       const body = await request.json();
       const image = body?.image;
-      if (!image) {
-        return NextResponse.json({ error: "No image provided" }, { status: 400 });
+      if (!image || typeof image !== "string") {
+        return sendError("Invalid JSON payload: expected image string in body.image", 400);
       }
-      cloudinaryResult = await cloudinary.uploader.upload(image, { folder: "gocart" });
+      uploadSource = image;
     } else {
       const formData = await request.formData();
       const file = formData.get("file") || formData.get("image");
       if (!file) {
-        return NextResponse.json({ error: "No file provided" }, { status: 400 });
+        return sendError("No file provided in form data", 400);
       }
+
       if (typeof file === "string") {
-        cloudinaryResult = await cloudinary.uploader.upload(file, { folder: "gocart" });
+        uploadSource = file;
+      } else if (file && typeof file.arrayBuffer === "function") {
+        uploadSource = await blobToDataUrl(file);
       } else {
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        cloudinaryResult = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream({ folder: "gocart" }, (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          });
-          uploadStream.end(buffer);
-        });
+        return sendError("Unsupported file upload type", 400);
       }
     }
 
-    return NextResponse.json({ url: cloudinaryResult.secure_url });
+    const result = await cloudinary.uploader.upload(uploadSource, {
+      folder: "gocart",
+    });
+
+    if (!result?.secure_url) {
+      return sendError("Cloudinary upload succeeded but no secure_url was returned", 500);
+    }
+
+    return NextResponse.json({ url: result.secure_url });
   } catch (err) {
-    return NextResponse.json({ error: "Upload failed", details: String(err) }, { status: 500 });
+    const message = err?.message || String(err) || "Unknown upload error";
+    return sendError(`Upload failed: ${message}`);
   }
 }
